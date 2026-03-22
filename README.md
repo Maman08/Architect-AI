@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🏗️ Architect AI
 
-## Getting Started
+**Your senior engineer thinking partner.** A personal tool that helps you solve design and architecture problems in your projects — like having a senior engineer sitting next to you.
 
-First, run the development server:
+## What This Does
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+You give it:
+1. **Project context** — PRD, tech stack, past decisions
+2. **Code** — via GitHub PAT, file upload, or paste
+3. **A design question or problem**
+
+It responds like a senior engineer + patient teacher. Discussion continues until you're satisfied. Every meaningful decision gets saved to project memory.
+
+## Tech Stack
+
+- **Next.js 16** (App Router) + **Tailwind CSS**
+- **Anthropic API** (claude-sonnet-4-20250514)
+- **Mermaid.js** for architecture diagrams
+- **React Markdown** for rendering responses
+- **Supabase** for persistent storage
+- Ready for **Vercel** deployment
+
+## Setup
+
+### 1. Supabase
+
+1. Create a [Supabase](https://supabase.com) project
+2. Go to the SQL Editor and run the schema from `lib/supabase-schema.sql`
+3. Copy your project URL and anon key
+
+### 2. Environment Variables
+
+Copy `.env.local` and fill in your keys:
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Install & Run
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Learn More
+## Deployment (Vercel)
 
-To learn more about Next.js, take a look at the following resources:
+1. Push to GitHub
+2. Import in [Vercel](https://vercel.com)
+3. Add environment variables:
+   - `ANTHROPIC_API_KEY`
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/
+├── page.js                          ← Home (project list)
+├── project/[id]/page.js             ← Project dashboard
+├── api/architect/route.js            ← Anthropic API call
+├── api/github/tree/route.js          ← Fetch repo file tree
+└── api/github/files/route.js         ← Fetch file contents
+components/
+├── ProjectCard.jsx                   ← Project card on home
+├── ContextSidebar.jsx                ← PRD, tech stack, decisions
+├── CodePanel.jsx                     ← GitHub + Upload + Paste
+├── ConversationArea.jsx              ← Chat UI
+├── MessageBubble.jsx                 ← Single message render
+├── ResultRenderer.jsx                ← Markdown + Mermaid
+├── FileTree.jsx                      ← GitHub file tree selector
+└── SaveDecisionModal.jsx             ← Save decision from response
+lib/
+├── supabase.js                       ← Supabase client
+├── supabase-schema.sql               ← Database schema
+├── storage.js                        ← Data access layer
+├── prompts.js                        ← System prompt + builder
+├── github.js                         ← GitHub API helpers
+└── utils.js                          ← Utility functions
+```
 
-## Deploy on Vercel
+## Key Architecture Notes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `lib/prompts.js` is the brain — the system prompt is carefully crafted. Do not rephrase or shorten it.
+- Full context (PRD + tech stack + decisions + code + conversation history) is sent on every API call — Claude has no memory between calls.
+- GitHub PAT is stored in the browser only. It gets sent to the GitHub API and included in Anthropic context — never stored server-side.
+- Mermaid diagrams render inline inside markdown via `ResultRenderer.jsx`.
+- All text fields auto-save with 500ms debounce.
